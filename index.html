@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CipherLab — Interactive Cryptography & Mathematics Lab</title>
+  <meta name="description" content="An interactive visual lab for cryptography and mathematics. Explore Caesar, Vigenère, Affine, Atbash, Rail Fence, RSA and Diffie-Hellman step-by-step." />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- KaTeX CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" integrity="sha384-zh0WIMBn0isnOReu++Uko+KVgk88DvmKMZ8BG2CH7LewU0VY9/0155Mb258VW8HQ" crossorigin="anonymous">
+</head>
+<body class="bg-[#090d16] text-[#e6ebf5] min-h-screen antialiased selection:bg-cyan-500/30 selection:text-cyan-200">
+  <div id="root"></div>
+
+  <!-- Pure cipher core preserved for backwards compatibility and node test_core runner -->
+  <script>
+/* CORE:START */
+// Pure cipher logic. No DOM access here, so it can be unit-tested in node.
+function mod26(n) { return ((n % 26) + 26) % 26; }
+
+function parseShift(raw) {
+  const n = parseInt(String(raw).trim(), 10);
+  if (!Number.isFinite(n)) return { error: 'Shift must be a whole number.' };
+  return { value: mod26(n) };
+}
+
+function parseKeyword(raw) {
+  const letters = String(raw || '').toUpperCase().replace(/[^A-Z]/g, '');
+  if (!letters) return { error: 'Keyword needs at least one letter A-Z.' };
+  return { value: letters };
+}
+
+// Returns { steps, output, error }. Each step: { input, output, isLetter, detail }.
+// cipher: 'caesar' | 'vigenere'. keyRaw: shift number or keyword. decrypt: boolean.
+function buildSteps(text, cipher, keyRaw, decrypt) {
+  const key = cipher === 'caesar' ? parseShift(keyRaw) : parseKeyword(keyRaw);
+  if (key.error) return { steps: [], output: '', error: key.error };
+
+  const kw = cipher === 'vigenere' ? key.value : null;
+  const steps = [];
+  let keyPos = 0; // advances only on letters
+
+  for (const ch of String(text)) {
+    const isAlpha = /^[A-Za-z]$/.test(ch);
+    if (!isAlpha) {
+      steps.push({ input: ch, output: ch, isLetter: false, detail: 'not a letter, passed through unchanged' });
+      continue;
+    }
+    const upper = ch.toUpperCase();
+    const p = upper.charCodeAt(0) - 65; // input letter index 0..25
+    let c, detail;
+
+    if (cipher === 'caesar') {
+      const s = key.value;
+      if (!decrypt) {
+        const sum = p + s;
+        c = mod26(sum);
+        detail = `${upper} = ${p}, + shift ${s} = ${sum}, mod 26 = ${c} (${String.fromCharCode(65 + c)})`;
+      } else {
+        const diff = p - s;
+        c = mod26(diff);
+        detail = `${upper} = ${p}, - shift ${s} = ${diff}, mod 26 = ${c} (${String.fromCharCode(65 + c)})`;
+      }
+    } else {
+      const kch = kw[keyPos % kw.length];
+      const k = kch.charCodeAt(0) - 65;
+      if (!decrypt) {
+        const sum = p + k;
+        c = mod26(sum);
+        detail = `${upper} = ${p}, key ${kch} = ${k}, ${p} + ${k} = ${sum}, mod 26 = ${c} (${String.fromCharCode(65 + c)})`;
+      } else {
+        const diff = p - k;
+        c = mod26(diff);
+        detail = `${upper} = ${p}, key ${kch} = ${k}, ${p} - ${k} = ${diff}, mod 26 = ${c} (${String.fromCharCode(65 + c)})`;
+      }
+      keyPos++;
+    }
+
+    const outCh = String.fromCharCode(65 + c);
+    const out = ch === ch.toLowerCase() ? outCh.toLowerCase() : outCh;
+    steps.push({ input: ch, output: out, isLetter: true, detail });
+  }
+
+  return { steps, output: steps.map(s => s.output).join(''), error: null };
+}
+
+function caesarEncrypt(text, shift) { return buildSteps(text, 'caesar', shift, false).output; }
+function caesarDecrypt(text, shift) { return buildSteps(text, 'caesar', shift, true).output; }
+function vigenereEncrypt(text, kw) { return buildSteps(text, 'vigenere', kw, false).output; }
+function vigenereDecrypt(text, kw) { return buildSteps(text, 'vigenere', kw, true).output; }
+/* CORE:END */
+  </script>
+
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>

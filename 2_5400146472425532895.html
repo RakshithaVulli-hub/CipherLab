@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cipher Lab</title>
+<style>
+  :root {
+    --bg: #0b0f17;
+    --panel: #121826;
+    --panel-2: #182033;
+    --border: #243049;
+    --text: #e6ebf5;
+    --muted: #8b97b0;
+    --accent: #4fd1c5;
+    --accent-2: #7c9cff;
+    --warn: #f6ad55;
+    --err: #fc8181;
+    --cur: #2a3a63;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px; line-height: 1.55; min-height: 100vh;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 40px; }
+  header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+  h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
+  h1 span { color: var(--accent); }
+  .tag { color: var(--muted); font-size: 14px; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+  .card h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  textarea, input[type=text], input[type=number], select {
+    width: 100%; background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px; font: inherit; outline: none;
+  }
+  textarea { min-height: 96px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  textarea:focus, input:focus, select:focus { border-color: var(--accent-2); box-shadow: 0 0 0 3px rgba(124,156,255,.18); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .field { margin-bottom: 14px; }
+  .seg { display: inline-flex; background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; }
+  .seg button {
+    background: transparent; color: var(--muted); border: 0; padding: 7px 14px; border-radius: 8px;
+    font: inherit; font-size: 14px; cursor: pointer;
+  }
+  .seg button.on { background: var(--accent); color: #04211e; font-weight: 600; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  button.btn {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 14px; font: inherit; font-size: 14px; cursor: pointer;
+  }
+  button.btn:hover { border-color: var(--accent-2); }
+  button.primary { background: var(--accent); color: #04211e; border-color: var(--accent); font-weight: 600; }
+  button.primary:hover { filter: brightness(1.08); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .output {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 17px;
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px;
+    min-height: 56px; white-space: pre-wrap; word-break: break-word; color: var(--accent);
+  }
+  .err { color: var(--err); font-size: 13px; min-height: 18px; margin-top: 8px; }
+  .hint { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+  .learn p { margin: 0; color: #c5cde0; }
+  .learn .title { color: var(--accent-2); font-weight: 600; margin-bottom: 6px; }
+  .stepcard {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; min-height: 120px;
+  }
+  .stepcard .pair { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 26px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .stepcard .pair .in { color: var(--text); }
+  .stepcard .pair .arrow { color: var(--muted); font-size: 20px; }
+  .stepcard .pair .out { color: var(--accent); font-weight: 700; }
+  .stepcard .detail { margin-top: 10px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px; color: #c5cde0; }
+  .stepcard .note { margin-top: 6px; color: var(--muted); font-size: 13px; }
+  .counter { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+  .tiles { display: flex; flex-wrap: wrap; gap: 6px; max-height: 260px; overflow-y: auto; padding: 2px; }
+  .tile {
+    min-width: 34px; text-align: center; padding: 6px 6px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--panel-2); font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; cursor: pointer; color: var(--text);
+  }
+  .tile small { display: block; color: var(--muted); font-size: 10.5px; }
+  .tile.letter { border-color: #2f3d5e; }
+  .tile.cur { background: var(--cur); border-color: var(--accent-2); box-shadow: 0 0 0 2px rgba(124,156,255,.35); }
+  .tile.done { color: var(--accent); }
+  .tile.plain { color: var(--muted); }
+  .playrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .speed { color: var(--muted); font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+  .speed input { width: 80px; padding: 6px 8px; }
+  .keyhelp { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+  footer { margin-top: 26px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); color: var(--muted); margin-left: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Cipher<span>Lab</span></h1>
+    <div class="tag">Caesar and Vigenere, one letter at a time</div>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT: controls, output, learn -->
+    <div>
+      <div class="card" style="margin-bottom:18px">
+        <h2>Input</h2>
+        <div class="field">
+          <label for="text">Message (<span id="inputLabel">plaintext</span>)</label>
+          <textarea id="text" spellcheck="false">Hello, World! Attack at dawn.</textarea>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="cipher">Cipher</label>
+            <select id="cipher">
+              <option value="caesar">Caesar (shift)</option>
+              <option value="vigenere">Vigenere (keyword)</option>
+            </select>
+          </div>
+          <div>
+            <label>Mode</label>
+            <div class="seg" id="mode">
+              <button data-mode="encrypt" class="on">Encrypt</button>
+              <button data-mode="decrypt">Decrypt</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="caesarKey" class="field">
+          <label for="shift">Shift key: <b id="shiftVal" style="color:var(--text)">3</b></label>
+          <input type="range" id="shiftRange" min="0" max="25" value="3" style="width:100%;accent-color:#4fd1c5">
+          <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
+            <input type="number" id="shift" min="-100" max="100" value="3" style="width:110px">
+            <span class="hint">any whole number; wraps mod 26</span>
+          </div>
+        </div>
+
+        <div id="vigKey" class="field" style="display:none">
+          <label for="keyword">Keyword (letters only)</label>
+          <input type="text" id="keyword" value="LEMON" spellcheck="false">
+          <div class="keyhelp">Each keyword letter sets a shift: A=0, B=1 ... Z=25. Only letters in the message use up key letters.</div>
+        </div>
+
+        <div class="btns">
+          <button class="btn primary" id="runBtn">Run</button>
+          <button class="btn" id="swapBtn" title="Move the output back into the input">Swap in/out</button>
+          <button class="btn" id="sampleBtn">Sample text</button>
+        </div>
+        <div class="err" id="err"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px">
+        <h2>Output</h2>
+        <div class="output" id="output">&nbsp;</div>
+        <div class="hint" id="roundtrip"></div>
+      </div>
+
+      <div class="card learn" id="learnCard">
+        <h2>Learn</h2>
+        <div class="title" id="learnTitle"></div>
+        <p id="learnText"></p>
+      </div>
+    </div>
+
+    <!-- RIGHT: step-by-step visualization -->
+    <div class="card">
+      <h2>Step-by-step</h2>
+
+      <div class="stepcard" id="stepCard">
+        <div class="pair"><span class="in">-</span></div>
+        <div class="detail">Run a cipher to see each letter's transformation.</div>
+      </div>
+
+      <div class="playrow">
+        <button class="btn" id="firstBtn" title="Reset">|&lt;</button>
+        <button class="btn" id="prevBtn">&lt; Prev</button>
+        <button class="btn primary" id="playBtn">Play</button>
+        <button class="btn" id="nextBtn">Next &gt;</button>
+        <label class="speed">Speed ms
+          <input type="number" id="speed" min="150" max="3000" step="50" value="600">
+        </label>
+      </div>
+      <div class="counter" id="counter"></div>
+      <div class="tiles" id="tiles"></div>
+      <div class="hint" style="margin-top:10px">Click any tile to jump to that step. Non-letters pass through unchanged and don't use key letters.</div>
+    </div>
+  </div>
+
+  <footer>
+    Prototype. RSA key exchange is planned future work and is not implemented here.
+    <span class="pill">no backend</span><span class="pill">open index.html</span>
+  </footer>
+</div>
+
+<script>
+/* CORE:START */
+// Pure cipher logic. No DOM access here, so it can be unit-tested in node.
+function mod26(n) { return ((n % 26) + 26) % 26; }
+
+function parseShift(raw) {
+  const n = parseInt(String(raw).trim(), 10);
+  if (!Number.isFinite(n)) return { error: 'Shift must be a whole number.' };
+  return { value: mod26(n) };
+}
+
+function parseKeyword(raw) {
+  const letters = String(raw || '').toUpperCase().replace(/[^A-Z]/g, '');
+  if (!letters) return { error: 'Keyword needs at least one letter A-Z.' };
+  return { value: letters };
+}
+
+// Returns { steps, output, error }. Each step: { input, output, isLetter, detail }.
+// cipher: 'caesar' | 'vigenere'. keyRaw: shift number or keyword. decrypt: boolean.
+function buildSteps(text, cipher, keyRaw, decrypt) {
+  const key = cipher === 'caesar' ? parseShift(keyRaw) : parseKeyword(keyRaw);
+  if (key.error) return { steps: [], output: '', error: key.error };
+
+  const kw = cipher === 'vigenere' ? key.value : null;
+  const steps = [];
+  let keyPos = 0; // advances only on letters
+
+  for (const ch of String(text)) {
+    const isAlpha = /^[A-Za-z]$/.test(ch);
+    if (!isAlpha) {
+      steps.push({ input: ch, output: ch, isLetter: false, detail: 'not a letter, passed through unchanged' });
+      continue;
+    }
+    const upper = ch.toUpperCase();
+    const p = upper.charCodeAt(0) - 65; // input letter index 0..25
+    let c, detail;
+
+    if (cipher === 'caesar') {
+      const s = key.value;
+      if (!decrypt) {
+        const sum = p + s;
+        c = mod26(sum);
+        detail = `${upper} = ${p}, + shift ${s} = ${sum}, mod 26 = ${c} (${String.fromCharCode(65 + c)})`;
+      } else {
+        const diff = p - s;
+        c = mod26(diff);
+        detail = `${upper} = ${p}, - shift ${s} = ${diff}, mod 26 = ${c} (${String.fromCharCode(65 + c)})`;
+      }
+    } else {
+      const kch = kw[keyPos % kw.length];
+      const k = kch.charCodeAt(0) - 65;
+      if (!decrypt) {
+        const sum = p + k;
+        c = mod26(sum);
+        detail = `${upper} = ${p}, key ${kch} = ${k}, ${p} + ${k} = ${sum}, mod 26 = ${c} (${String.fromCharCode(65 + c)})`;
+      } else {
+        const diff = p - k;
+        c = mod26(diff);
+        detail = `${upper} = ${p}, key ${kch} = ${k}, ${p} - ${k} = ${diff}, mod 26 = ${c} (${String.fromCharCode(65 + c)})`;
+      }
+      keyPos++;
+    }
+
+    const outCh = String.fromCharCode(65 + c);
+    const out = ch === ch.toLowerCase() ? outCh.toLowerCase() : outCh;
+    steps.push({ input: ch, output: out, isLetter: true, detail });
+  }
+
+  return { steps, output: steps.map(s => s.output).join(''), error: null };
+}
+
+function caesarEncrypt(text, shift) { return buildSteps(text, 'caesar', shift, false).output; }
+function caesarDecrypt(text, shift) { return buildSteps(text, 'caesar', shift, true).output; }
+function vigenereEncrypt(text, kw) { return buildSteps(text, 'vigenere', kw, false).output; }
+function vigenereDecrypt(text, kw) { return buildSteps(text, 'vigenere', kw, true).output; }
+/* CORE:END */
+
+// ---------- UI ----------
+const LEARN = {
+  caesar: {
+    title: 'How the Caesar cipher works',
+    text: 'Caesar shifts every letter of the alphabet by the same fixed number, the key. With a shift of 3, A becomes D, B becomes E, and so on, wrapping after Z back to A. Decryption runs the same shift backwards. It is named after Julius Caesar, who reportedly used it, but it is weak: there are only 25 useful keys, so an attacker can try them all, or spot the pattern in letter frequencies.'
+  },
+  vigenere: {
+    title: 'How the Vigenere cipher works',
+    text: 'Vigenere uses a keyword instead of one number. Each keyword letter is a shift (A=0, B=1, ... Z=25), and the keyword repeats along the message. Each letter in the message is shifted by its own key letter, so one letter can turn into different letters in different places, which defeats simple letter-frequency analysis. Spaces and punctuation don\'t consume key letters. It was long called "le chiffre indechiffrable", but repeated patterns (the Kasiski method) can break it when the key is short.'
+  }
+};
+
+const state = { cipher: 'caesar', decrypt: false, steps: [], output: '', idx: -1, timer: null };
+
+const $ = id => document.getElementById(id);
+
+function setInputLabel() { $('inputLabel').textContent = state.decrypt ? 'ciphertext' : 'plaintext'; }
+
+function setCipher(c) {
+  state.cipher = c;
+  $('caesarKey').style.display = c === 'caesar' ? '' : 'none';
+  $('vigKey').style.display = c === 'vigenere' ? '' : 'none';
+  $('learnTitle').textContent = LEARN[c].title;
+  $('learnText').textContent = LEARN[c].text;
+  run();
+}
+
+function setMode(decrypt) {
+  state.decrypt = decrypt;
+  document.querySelectorAll('#mode button').forEach(b => {
+    b.classList.toggle('on', (b.dataset.mode === 'decrypt') === decrypt);
+  });
+  setInputLabel();
+  run();
+}
+
+function currentKey() {
+  return state.cipher === 'caesar' ? $('shift').value : $('keyword').value;
+}
+
+function run() {
+  const res = buildSteps($('text').value, state.cipher, currentKey(), state.decrypt);
+  $('err').textContent = res.error || '';
+  state.steps = res.steps;
+  state.output = res.output;
+  $('output').textContent = res.error ? '' : (res.output || '(empty)');
+  if (res.error) $('output').innerHTML = '&nbsp;';
+  checkRoundTrip();
+  stop();
+  state.idx = -1;
+  renderSteps();
+}
+
+// Verify the inverse mode returns the original text (shown as a demo badge).
+function checkRoundTrip() {
+  const el = $('roundtrip');
+  if ($('err').textContent || !state.output) { el.textContent = ''; return; }
+  const inv = buildSteps(state.output, state.cipher, currentKey(), !state.decrypt);
+  const ok = inv.output === $('text').value;
+  el.textContent = ok
+    ? 'Round-trip check: running the other mode on this output gives back the original text exactly.'
+    : 'Round-trip check failed (unexpected).';
+  el.style.color = ok ? '' : 'var(--err)';
+}
+
+function renderSteps() {
+  const tiles = $('tiles');
+  tiles.innerHTML = '';
+  state.steps.forEach((s, i) => {
+    const t = document.createElement('div');
+    t.className = 'tile ' + (s.isLetter ? 'letter' : 'plain');
+    if (i === state.idx) t.classList.add('cur');
+    else if (i < state.idx) t.classList.add('done');
+    t.textContent = s.input === ' ' ? '\u2423' : s.input;
+    const small = document.createElement('small');
+    small.textContent = s.isLetter ? s.output : '=';
+    t.appendChild(small);
+    t.addEventListener('click', () => { stop(); state.idx = i; renderSteps(); });
+    tiles.appendChild(t);
+    if (i === state.idx) t.scrollIntoView({ block: 'nearest' });
+  });
+
+  const card = $('stepCard');
+  card.innerHTML = '';
+  const total = state.steps.length;
+  if (total === 0) {
+    card.innerHTML = '<div class="pair"><span class="in">-</span></div><div class="detail">Type a message to see each letter\'s transformation.</div>';
+  } else if (state.idx < 0) {
+    card.innerHTML = '<div class="pair"><span class="in">Ready</span></div><div class="detail">Press Play or Next to step through ' + total + ' characters.</div>';
+  } else {
+    const s = state.steps[state.idx];
+    const pair = document.createElement('div');
+    pair.className = 'pair';
+    pair.innerHTML = '<span class="in"></span><span class="arrow">&rarr;</span><span class="out"></span>';
+    pair.querySelector('.in').textContent = s.input === ' ' ? 'space' : s.input;
+    pair.querySelector('.out').textContent = s.output === ' ' ? 'space' : s.output;
+    const det = document.createElement('div');
+    det.className = 'detail';
+    det.textContent = s.detail;
+    card.appendChild(pair);
+    card.appendChild(det);
+    if (state.cipher === 'vigenere' && s.isLetter) {
+      const n = document.createElement('div');
+      n.className = 'note';
+      n.textContent = 'Key letter advances only on letters, so spaces and punctuation are skipped.';
+      card.appendChild(n);
+    }
+  }
+  $('counter').textContent = total ? (state.idx < 0 ? total + ' steps' : 'Step ' + (state.idx + 1) + ' of ' + total) : '';
+  $('prevBtn').disabled = state.idx <= 0;
+  $('nextBtn').disabled = state.idx >= total - 1;
+}
+
+function go(i) {
+  if (!state.steps.length) return;
+  state.idx = Math.max(0, Math.min(state.steps.length - 1, i));
+  renderSteps();
+}
+
+function stop() {
+  if (state.timer) { clearInterval(state.timer); state.timer = null; }
+  $('playBtn').textContent = 'Play';
+}
+
+function togglePlay() {
+  if (state.timer) { stop(); return; }
+  if (!state.steps.length) return;
+  if (state.idx >= state.steps.length - 1) state.idx = -1;
+  $('playBtn').textContent = 'Pause';
+  const ms = Math.max(150, parseInt($('speed').value, 10) || 600);
+  state.timer = setInterval(() => {
+    if (state.idx >= state.steps.length - 1) { stop(); return; }
+    go(state.idx + 1);
+  }, ms);
+  go(state.idx + 1);
+}
+
+// Wire up events
+$('cipher').addEventListener('change', e => setCipher(e.target.value));
+document.querySelectorAll('#mode button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode === 'decrypt')));
+$('shiftRange').addEventListener('input', e => { $('shift').value = e.target.value; $('shiftVal').textContent = e.target.value; run(); });
+$('shift').addEventListener('input', e => { $('shiftRange').value = mod26(parseInt(e.target.value, 10) || 0); $('shiftVal').textContent = e.target.value; run(); });
+$('keyword').addEventListener('input', run);
+$('text').addEventListener('input', run);
+$('runBtn').addEventListener('click', run);
+$('swapBtn').addEventListener('click', () => {
+  if (!state.output) return;
+  $('text').value = state.output;
+  setMode(!state.decrypt);
+});
+$('sampleBtn').addEventListener('click', () => {
+  $('text').value = state.decrypt ? 'Khoor, Zruog! Dwwdfn dw gdzq.' : 'Hello, World! Attack at dawn.';
+  run();
+});
+$('playBtn').addEventListener('click', togglePlay);
+$('nextBtn').addEventListener('click', () => { stop(); go(state.idx + 1); });
+$('prevBtn').addEventListener('click', () => { stop(); go(state.idx - 1); });
+$('firstBtn').addEventListener('click', () => { stop(); state.idx = -1; renderSteps(); });
+
+setCipher('caesar');
+setMode(false);
+</script>
+</body>
+</html>
